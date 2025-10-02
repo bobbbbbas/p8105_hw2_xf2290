@@ -223,6 +223,6 @@ top10_drop
 
 
 From January 2020 to January 2021, rental prices fell sharply in many ZIP codes.
-The 10 ZIP codes with the largest drops were:10007, 10069, 10009, 10016, 10001, 10002, 10004, 10038, 10012, 10010, They are listed in order from the largest to the smallest decline.
+The 10 ZIP codes with the largest drops were:10007, 10069, 10009, 10016, 10001, 10002, 10004, 10038, 10012, 10010, they are listed in order from the largest to the smallest decline.
 The largest declines occurred in high-rent Manhattan ZIP codes such as Lower Manhattan, Lower East Side, and Chelsea. These areas rely heavily on office workers, tourism, and students, all of which were disrupted during the COVID-19 pandemic, leading to sharp drops in rental demand and prices.
 
