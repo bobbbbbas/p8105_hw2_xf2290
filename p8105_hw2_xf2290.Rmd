@@ -75,8 +75,44 @@ The pols-month dataset contained monthly counts of political leaders, including 
 
 Problem 2
 ```{R}
-
+library(tidyverse)
+library(readxl)
+mr_trash <- read_excel("202409 Trash Wheel Collection Data.xlsx",
+                       sheet = "Mr. Trash Wheel",
+                       skip = 1) %>%   # skips metadata row
+  janitor::clean_names() %>%
+  filter(!is.na(dumpster)) %>%       # keep only actual dumpster rows
+  mutate(
+    sports_balls = as.integer(round(sports_balls, 0)),
+    year = as.integer(year),
+    wheel = "Mr. Trash Wheel"        # add identifier
+  )
+```
+```{R}
+prof_trash <- read_excel("202409 Trash Wheel Collection Data.xlsx",
+                         sheet = "Professor Trash Wheel",
+                         skip = 1) %>%
+  janitor::clean_names() %>%
+  filter(!is.na(dumpster)) %>%
+  mutate(
+    year = as.integer(year),
+    wheel = "Professor Trash Wheel"
+  )
 ```
 
+```{R}
+gwy_trash <- read_excel("202409 Trash Wheel Collection Data.xlsx",
+                      sheet = "Gwynnda Trash Wheel",
+                      skip = 1) %>%
+  janitor::clean_names() %>%
+  filter(!is.na(dumpster)) %>%
+  mutate(
+    year = as.integer(year),
+    wheel = "Gwynnda Trash Wheel"
+  )
+```
+```{R}
+trash_wheels <- bind_rows(mr_trash, prof_trash, gwy_trash)
+```
 
-
+The combined Trash Wheel dataset brings together information from Mr. Trash Wheel, Professor Trash Wheel, and Gwynnda, giving a unified record of litter collection in Baltimore’s waterways. After cleaning and merging, the dataset contains r nrow(trash_wheels) observations and r ncol(trash_wheels) variables, with each row corresponding to a dumpster load of trash. Key variables include dumpster (the load identifier), date, year, weight_tons (the total weight of trash collected), and item-specific counts such as plastic_bottles, cigarette_butts, and sports_balls. For the available data, Professor Trash Wheel collected a total of r sum(trash_wheels$weight_tons[trash_wheels$wheel == "Professor Trash Wheel"], na.rm = TRUE) tons of trash. Looking at Gwynnda specifically, in June 2022 she collected r sum(trash_wheels$cigarette_butts[trash_wheels$wheel == "Gwynnda" & trash_wheels$year == 2022 & lubridate::month(trash_wheels$date) == 6], na.rm = TRUE) cigarette butts. This illustrates how the dataset allows us to compare contributions across the different Trash Wheels and explore patterns in the types of waste collected.
