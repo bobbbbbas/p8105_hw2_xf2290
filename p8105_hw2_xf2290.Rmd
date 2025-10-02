@@ -1,0 +1,79 @@
+---
+title: "p8105_hw2_xf2290"
+author: "Xiwei Fu"
+date: "2025-10-01"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Probelm 1
+```{r}
+library(tidyverse)
+#relative paths
+pols <- read_csv("pols-month.csv")
+snp <- read_csv("snp.csv")
+unemp <- read_csv("unemployment.csv")
+```
+Clean pols
+```{r}
+pols_clean <- pols %>% #new set
+  separate(mon, into = c("year", "month", "day"), sep = "-", convert = TRUE) %>%
+  mutate(
+    month = month.name[month],  # replace it with month name
+    president = if_else(prez_gop == 1, "gop", "dem")
+  ) %>%
+  select(-prez_gop, -prez_dem, -day) %>%
+  arrange(year, month)
+```
+Clean snp
+```{R}
+snp_clean <- snp %>%
+  separate(date, into = c("month", "day", "year"), sep = "/", convert = TRUE) %>%
+  mutate(
+    # Convert 2-digit year into 4-digit
+    year = if_else(year < 50, year + 2000, year + 1900),
+    month = month.name[month] 
+  ) %>%
+  select(year, month, close) %>%
+  arrange(year, month)
+```
+Clean unemp
+```{R}
+unemp_clean <- unemp %>%
+  pivot_longer(cols = Jan:Dec, names_to = "month", values_to = "unemployment") %>%
+  mutate(
+    month = case_when(
+      month == "Jan" ~ "January",
+      month == "Feb" ~ "February",
+      month == "Mar" ~ "March",
+      month == "Apr" ~ "April",
+      month == "May" ~ "May",
+      month == "Jun" ~ "June",
+      month == "Jul" ~ "July",
+      month == "Aug" ~ "August",
+      month == "Sep" ~ "September",
+      month == "Oct" ~ "October",
+      month == "Nov" ~ "November",
+      month == "Dec" ~ "December"
+    )
+  ) %>%
+  rename(year = Year) %>%
+  arrange(year, month)
+```
+Mere datasets
+```{R}
+merged_data1 <- left_join(pols_clean, snp_clean, by = c("year", "month"))
+
+final_data <- left_join(merged_data1, unemp_clean, by = c("year", "month"))
+```
+
+The pols-month dataset contained monthly counts of political leaders, including indicators of whether the president was Republican or Democrat, as well as the number of governors, senators, and representatives by party. The snp dataset tracked the Standard & Poor’s stock market index through its monthly closing values, reflecting broader economic conditions. The unemployment dataset provided monthly unemployment percentages for each year. After cleaning and merging, the resulting dataset (final_data) contains 822 observations and 11 variables, covering a wide range of years. Key variables include year, month, president (party of the sitting president), counts of Democratic and Republican officeholders (gov_gop, sen_gop, rep_gop, etc.), the S&P index closing value (close), and the monthly unemployment rate (unemployment).
+
+
+
+
+
