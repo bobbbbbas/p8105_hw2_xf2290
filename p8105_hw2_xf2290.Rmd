@@ -115,4 +115,114 @@ gwy_trash <- read_excel("202409 Trash Wheel Collection Data.xlsx",
 trash_wheels <- bind_rows(mr_trash, prof_trash, gwy_trash)
 ```
 
-The combined Trash Wheel dataset brings together information from Mr. Trash Wheel, Professor Trash Wheel, and Gwynnda, giving a unified record of litter collection in Baltimore’s waterways. After cleaning and merging, the dataset contains r nrow(trash_wheels) observations and r ncol(trash_wheels) variables, with each row corresponding to a dumpster load of trash. Key variables include dumpster (the load identifier), date, year, weight_tons (the total weight of trash collected), and item-specific counts such as plastic_bottles, cigarette_butts, and sports_balls. For the available data, Professor Trash Wheel collected a total of r sum(trash_wheels$weight_tons[trash_wheels$wheel == "Professor Trash Wheel"], na.rm = TRUE) tons of trash. Looking at Gwynnda specifically, in June 2022 she collected r sum(trash_wheels$cigarette_butts[trash_wheels$wheel == "Gwynnda" & trash_wheels$year == 2022 & lubridate::month(trash_wheels$date) == 6], na.rm = TRUE) cigarette butts. This illustrates how the dataset allows us to compare contributions across the different Trash Wheels and explore patterns in the types of waste collected.
+```{R}
+total_prof_weight <- sum(trash_wheels$weight_tons[trash_wheels$wheel == "Professor Trash Wheel"], na.rm = TRUE)
+gwynnda_cigs_june22 <- sum(trash_wheels$cigarette_butts[
+  trash_wheels$wheel == "Gwynnda Trash Wheel" & 
+  trash_wheels$year == 2022 & 
+  lubridate::month(trash_wheels$date) == 6
+], na.rm = TRUE)
+```
+The combined Trash Wheel dataset includes information from Mr. Trash Wheel, Professor Trash Wheel, and Gwynnda, resulting in 1,033 observations and 17 variables. Each row represents a dumpster load of trash, with key variables such as dumpster (load identifier), date, year, weight_tons (the total weight of trash collected), and item-specific counts including plastic_bottles, cigarette_butts, and sports_balls. From the available data, Professor Trash Wheel collected a total of 246.74 tons of trash, while Gwynnda collected 18120 cigarette butts in June 2022.
+
+Problem 3
+
+```{R}
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(lubridate)
+library(janitor)
+
+zori <- read_csv("Zip_zori_uc_sfrcondomfr_sm_month_NYC.csv")
+zori_long <- zori %>%
+  pivot_longer(
+    cols = 10:ncol(.),          
+    names_to = "date",
+    values_to = "zori"
+  ) %>%
+  mutate(
+    zori = as.numeric(zori),
+    zip = str_pad(as.character(RegionName), 5, pad = "0")
+  ) %>%
+  select(zip, zori, everything())
+
+zipcodes <- read_csv("Zip Codes.csv", show_col_types = FALSE) %>%
+  clean_names() %>%
+  rename(zip = zip_code) %>%
+  mutate(zip = str_pad(as.character(zip), 5, pad = "0"))
+
+final_dataset <- zori_long %>%
+  left_join(zipcodes, by = "zip")
+
+final_dataset <- final_dataset %>%
+  select(-RegionType, -RegionName)
+
+glimpse(final_dataset)
+head(final_dataset)
+```
+The final tidy dataset contains 17516 observations and 16 variables.
+
+```{R}
+n_unique_zip <- final_dataset %>% summarize(unique_zip = n_distinct(zip))
+n_unique_neighborhood <- final_dataset %>% summarize(unique_neighborhood = n_distinct(neighborhood))
+
+n_unique_zip
+n_unique_neighborhood
+```
+It includes 149 unique ZIP codes and 43 unique neighborhoods.
+
+```{R}
+
+zori_zips <- zori %>%
+  transmute(zip = str_pad(as.character(RegionName), 5, pad = "0")) %>%
+  distinct() %>%
+  pull(zip)
+
+zipfile_zips <- zipcodes %>%
+  transmute(zip = str_pad(as.character(zip), 5, pad = "0")) %>%
+  distinct() %>%
+  pull(zip)
+
+zips_only_in_zipfile <- setdiff(zipfile_zips, zori_zips)
+
+print(head(zips_only_in_zipfile))
+```
+171 ZIP codes appear in the ZIP code dataset but not in the Zillow dataset.
+Examples include "10464" "10474" "10475" "10499" "10550" "10704" etc. I have all of them store in "zips_only_in_zipfile"
+These are often special-purpose ZIP codes such as commercial-only areas, government buildings, PO box areas, or low-population zones without active residential rental markets.
+
+```{r}
+library(dplyr)
+library(lubridate)
+
+top10_drop <- final_dataset %>%
+  filter(month(date) == 1, year(date) %in% c(2020, 2021)) %>%
+  mutate(year = year(date)) %>%
+  group_by(zip, year, county, neighborhood) %>%
+  summarize(zori_mean = mean(zori, na.rm = TRUE), .groups = "drop") %>%
+  tidyr::pivot_wider(names_from = year, values_from = zori_mean, names_prefix = "y") %>%
+  filter(!is.na(y2020), !is.na(y2021)) %>%
+  mutate(
+    drop_abs = y2021 - y2020,
+    pct_drop = (y2021 - y2020) / y2020 * 100
+  ) %>%
+  arrange(drop_abs) %>%   
+  slice_head(n = 10) %>%
+  select(zip, county, neighborhood, zori_2020 = y2020, zori_2021 = y2021, drop_abs, pct_drop) %>%
+  mutate(
+    zori_2020 = round(zori_2020, 2),
+    zori_2021 = round(zori_2021, 2),
+    drop_abs = round(drop_abs, 2),
+    pct_drop = round(pct_drop, 1)
+  )
+
+top10_drop
+```
+
+
+From January 2020 to January 2021, rental prices fell sharply in many ZIP codes.
+The 10 ZIP codes with the largest drops were:10007, 10069, 10009, 10016, 10001, 10002, 10004, 10038, 10012, 10010, They are listed in order from the largest to the smallest decline.
+The largest declines occurred in high-rent Manhattan ZIP codes such as Lower Manhattan, Lower East Side, and Chelsea. These areas rely heavily on office workers, tourism, and students, all of which were disrupted during the COVID-19 pandemic, leading to sharp drops in rental demand and prices.
+
