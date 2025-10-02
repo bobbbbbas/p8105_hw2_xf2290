@@ -73,7 +73,10 @@ final_data <- left_join(merged_data1, unemp_clean, by = c("year", "month"))
 
 The pols-month dataset contained monthly counts of political leaders, including indicators of whether the president was Republican or Democrat, as well as the number of governors, senators, and representatives by party. The snp dataset tracked the Standard & Poor’s stock market index through its monthly closing values, reflecting broader economic conditions. The unemployment dataset provided monthly unemployment percentages for each year. After cleaning and merging, the resulting dataset (final_data) contains 822 observations and 11 variables, covering a wide range of years. Key variables include year, month, president (party of the sitting president), counts of Democratic and Republican officeholders (gov_gop, sen_gop, rep_gop, etc.), the S&P index closing value (close), and the monthly unemployment rate (unemployment).
 
+Problem 2
+```{R}
 
+```
 
 
 
